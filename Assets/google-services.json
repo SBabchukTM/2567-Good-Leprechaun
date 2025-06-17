@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "845503298795",
+    "project_id": "good-leprechaun",
+    "storage_bucket": "good-leprechaun.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:845503298795:android:44eab78e4a6f835105d2ae",
+        "android_client_info": {
+          "package_name": "com.droidhen.game.poke"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG2v1B6BPyCHJxFRlIveGaSj5CrTdlGH8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
