@@ -25,6 +25,12 @@ public class WebViewController : MonoBehaviour
     
     private bool _isVisible;
     
+    private float _checkTimer = 0f;
+    
+    private float _checkInterval = 1f;
+    
+    private Coroutine rotationCoroutine;
+    
     #if UNITY_ANDROID && !UNITY_EDITOR
     private KeyboardVisibilityDetector _keyboardDetector;
     #endif
@@ -35,14 +41,6 @@ public class WebViewController : MonoBehaviour
     {
         get
         {
-            //return "https://balloonswinner.life/privacypolicy/?3ve1kbqs8h=e9fecaf8-1376-4017-9115-e95a08119218&huax91ae4p=0&6x13a9aqh2=cmpgn=trident-dev-test_TEST-Deeplink_test1_%D1%82%D0%B5%D1%81%D1%822_TEST3_%D0%A2%D0%95%D0%A1%D0%A24_s%20p%20a%20c%20e";//✔
-            //return "https://betking.com.ua/";//✔
-            //return "https://winboss.ua";//✔
-            //return "http://www.http2demo.io/";//✔
-            //return "https://slotscity.ua/";//✔
-            //return "https://www.whatismybrowser.com/detect/are-third-party-cookies-enabled/";//✔
-            //return "https://betoholictrack.com/wKWSmlPF?sub_id=23uejou1gt25f"; //✔
-
             if(!GameSettings.HasKey(Constants.IsFirstRunWebView))
             {
                 GameSettings.SetFirstWebView();
@@ -54,18 +52,15 @@ public class WebViewController : MonoBehaviour
                 var url = GameSettings.GetValue(Constants.StartUrl, "");
                 
                 if(!GameSettings.HasKey(Constants.StartUrl))
+                {
                     return GameSettings.GetValue(Constants.ReceiveUrl, "");
+                }
                 
                 if (!GameSettings.HasKey(Constants.LastUrl))
                 {
                     GameSettings.SetValue(Constants.LastUrl, url);
                 }
-                else
-                {
-                    //Only start offer url
-                    //url = GameSettings.GetValue(Constants.LastUrl, "");
-                }
-
+                
                 return url;
             }
         }
@@ -112,8 +107,10 @@ public class WebViewController : MonoBehaviour
         if (isConnection != true) return;
         
         if(ConnectivityManager.Instance)
+        {
             ConnectivityManager.Instance.OnChangedInternetConnection.AddListener(OnInitialize);
-            
+        }
+        
         InitializeWebView();
     }
 
@@ -131,7 +128,9 @@ public class WebViewController : MonoBehaviour
         PrintMessage("### Create WebView");
         
         if (_webView != null)
+        {
             return;
+        }
 
         UniWebView.SetAllowAutoPlay(true);//+
         UniWebView.SetAllowInlinePlay(true);//+
@@ -142,6 +141,7 @@ public class WebViewController : MonoBehaviour
         //UniWebView.SetAllowUniversalAccessFromFileURLs(true);//-
 
         var webViewGameObject = new GameObject("UniWebView");
+        
         _webView = webViewGameObject.AddComponent<UniWebView>();
 
         SetupWebview(_webView);
@@ -258,20 +258,6 @@ public class WebViewController : MonoBehaviour
             PrintMessage($"@@@ ⏪ OnShouldClose: url = {view.Url}");
             
             return false;
-            
-            if (GameSettings.GetValue(Constants.LastUrl) != GameSettings.GetValue(Constants.StartUrl))
-            {
-                _webView.Load(GameSettings.GetValue(Constants.StartUrl));
-            }
-            else
-            {
-                if(canReload)
-                {
-                    _webView.Reload();
-                }
-            }
-
-            return false;
         };
     }
     
@@ -281,9 +267,6 @@ public class WebViewController : MonoBehaviour
         
         _webView.Frame = FlipRectY(Screen.safeArea);
     }
-
-    private float _checkTimer = 0f;
-    private float _checkInterval = 1f;
 
     private void LateUpdate()
     {
@@ -356,93 +339,7 @@ public class WebViewController : MonoBehaviour
             PrintMessage($"### 🔒Blocked download files: {request.Url}");
                 
             return false;
-
-            /*if (IsAppLink(request.Url))
-            {
-                Application.OpenURL(request.Url);
-
-                PrintMessage($" ʼ️‍💥IsAppLink");
-                
-                return false;
-            }
-            
-            if (request.Url.StartsWith("intent://"))
-            {
-                OpenIntent(request.Url);
-                
-                return false;
-            }
-            
-            if (request.Url.StartsWith("http://") || request.Url.StartsWith("https://"))
-            {
-                PrintMessage($"### 🔗 OpenURL: {request.Url}");
-                
-                return true;
-            }
-
-            PrintMessage($"### 🧃 Application OpenURL: {request.Url}");
-            
-            Application.OpenURL(request.Url);
-            
-            return false;*/
-
-            //ExternalAppLauncher.Instance.RunExternalApp(request.Url);
-            
-            //return !ExternalAppLauncher.Instance.IsOpeningOtherApp;
         });
-    }
-    
-    private bool IsAppLink(string url)
-    {
-        PrintMessage($" 🔗❔IsAppLink: url = {url}");
-        return url.StartsWith("intent://") ||
-               url.StartsWith("viber://") ||
-               url.StartsWith("tg://") ||
-               url.StartsWith("tg:join") ||
-               url.StartsWith("tg:resolve") ||
-               url.StartsWith("whatsapp://") ||
-               url.StartsWith("fb://") ||
-               url.StartsWith("twitter://") ||
-               url.StartsWith("line://") ||
-               url.Contains("telegram.me") ||
-               url.Contains("t.me");
-    }
-
-    public void OpenApp(string url)
-    {
-        AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-        AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-
-        AndroidJavaObject intent = new AndroidJavaObject("android.content.Intent", "android.intent.action.VIEW");
-        intent.Call<AndroidJavaObject>("setData", new AndroidJavaObject("android.net.Uri", url));
-
-        intent.Call<AndroidJavaObject>("addFlags", 0x10000000); // FLAG_ACTIVITY_NEW_TASK
-
-        currentActivity.Call("startActivity", intent);
-    }
-    
-    private void OpenIntent(string intentUrl)
-    {
-        try
-        {
-            AndroidJavaClass intentClass = new AndroidJavaClass("android.content.Intent");
-            AndroidJavaObject intentObject =
-                new AndroidJavaObject("android.content.Intent", intentClass.GetStatic<string>("ACTION_VIEW"));
-
-            AndroidJavaClass uriClass = new AndroidJavaClass("android.net.Uri");
-            AndroidJavaObject uriObject = uriClass.CallStatic<AndroidJavaObject>("parse", intentUrl);
-
-            intentObject.Call<AndroidJavaObject>("setData", uriObject);
-
-            AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-            AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-
-            currentActivity.Call("startActivity", intentObject);
-        }
-        catch (System.Exception e)
-        {
-            PrintMessage($"Not Found intent: " + e.Message);
-        }
     }
 
     private void SupportMultipleWindows()
@@ -460,8 +357,6 @@ public class WebViewController : MonoBehaviour
             rotationCoroutine = StartCoroutine(DelayedAdjust(view));
             
             view.ScrollTo(0, 0, false);
-            
-            //view.Load(view.Url);
         };
         
         _webView.OnMultipleWindowClosed += (view, windowId) => {
@@ -470,18 +365,14 @@ public class WebViewController : MonoBehaviour
             PrintMessage($"        A new window with identifier '{windowId}' is closed");
         };
     }
-    private Coroutine rotationCoroutine;
+    
     private IEnumerator DelayedAdjust(UniWebView webView)
     {
-        //yield return new WaitForSeconds(0.33f);
-        
         yield return new WaitForEndOfFrame(); 
         
         PrintMessage($"🪃 @@@ DelayedAdjust");
         
         SetFrame();
-      
-        //webView.Frame = FlipRectY(Screen.safeArea);
     }
 
     private static Rect FlipRectY(Rect rect)
@@ -548,12 +439,7 @@ public class WebViewController : MonoBehaviour
     private void OnLoadingErrorReceived(UniWebView view, int errorCode, string errorMessage, UniWebViewNativeResultPayload payload)
     {
         PrintMessage($"### 💀OnLoadingErrorReceived: errorCode={errorCode}, _webView.Url={_webView.Url}, errorMessage={errorMessage}");
-        
-        //if (errorCode is not (-1007 or -9 or 0)) return;
-        //if (payload.Extra != null &&
-        //    payload.Extra.TryGetValue(UniWebViewNativeResultPayload.ExtraFailingURLKey, out var value))
-        //    view.Load((string)value);
-        
+
         ShowWebView();
     }
     
@@ -576,10 +462,6 @@ public class WebViewController : MonoBehaviour
     
     private void OnPageFinished(UniWebView view, int statusCode, string url)
     {
-        //PrintMessage($"### 🖱️OnPageFinished: IsOpeningOtherApp={ExternalAppLauncher.Instance.IsOpeningOtherApp}");
-        
-        //if (ExternalAppLauncher.Instance.IsOpeningOtherApp) return;
-        
         PrintMessage($"### 🏁OnPageFinished: url={url}");
         
         if(url != "about:blank")
@@ -619,10 +501,14 @@ public class WebViewController : MonoBehaviour
         _webView.Hide();
         
         if(ConnectivityManager.Instance)
+        {
             ConnectivityManager.Instance.CheckErrorReceived();
+        }
         
         if(ConnectivityManager.Instance)
+        {
             ConnectivityManager.Instance.OnChangedInternetConnection.AddListener(CheckConnection);
+        }
     }
 
     private void ShowWebView()

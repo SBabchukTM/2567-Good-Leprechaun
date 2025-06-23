@@ -7,13 +7,11 @@ public static class USBInstallationChecker
     {
         if (UnityEngine.Application.isEditor)
         {
-            PrintMessage("Запуск в редакторі Unity, повертається фіксоване значення DeveloperModeEnabled = false");
             return false;
         }
         
         if (UnityEngine.Application.platform != RuntimePlatform.Android)
         {
-            PrintMessage("Ця функція працює тільки на Android.");
             return false;
         }
 
@@ -28,7 +26,6 @@ public static class USBInstallationChecker
         }
         catch (System.Exception e)
         {
-            PrintMessage("Не вдалося отримати статус Developer Mode: " + e.Message);
             return false;
         }
     }
@@ -37,13 +34,11 @@ public static class USBInstallationChecker
     {
         if (UnityEngine.Application.isEditor)
         {
-            PrintMessage("Запуск в редакторі Unity, повертається фіксоване значення UsbDebugging = false");
             return false;
         }
 
         if (UnityEngine.Application.platform != RuntimePlatform.Android)
         {
-            PrintMessage("Ця функція працює тільки на Android.");
             return false;
         }
 
@@ -58,7 +53,6 @@ public static class USBInstallationChecker
         }
         catch (System.Exception e)
         {
-            PrintMessage("Не вдалося отримати статус USB Debugging: " + e.Message);
             return false;
         }
     }

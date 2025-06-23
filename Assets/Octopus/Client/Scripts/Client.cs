@@ -17,16 +17,22 @@ namespace Octopus.Client
 
         private List<Request> requests = new List<Request>();
         
+        private string installReferrer;
+        
+        private UniWebView _webView;
+        
+        private string generatedURL;
+        
         protected void Awake()
         {
             if (Instance != null)
             {
                 Destroy(gameObject);
+                
+                return;
             }
-            else
-            {
-                Instance = this;
-            }
+            
+            Instance = this;
         }
         
         public void Initialize()
@@ -34,47 +40,17 @@ namespace Octopus.Client
             PrintMessage("!!! Client -> Initialize");
             
             if(GameSettings.HasKey(Constants.IsFirstRunApp) && !isIgnoreFirstRunApp)
-            {//Повторний запуск додаток
+            {
+                PrintMessage("Повторно запустили додаток");
                 
-                PrintMessage("!!! Client - Повторно запустили додаток");
-                //requests.Add(new StartRequest());
-                
-                if (CheckReceiveUrlIsNullOrEmpty())
-                {
-                    PrintMessage("!!! Client -  Стартова сторінка з Бінома є порожня, показуєм білу апку");
-                    //Якщо Біном є порожнім, показуєм білу апку
-                    SwitchToScene();
-                }
-                else
-                {
-                    PrintMessage("!!! Client - Біном не є порожній");
-                    //Біном не порожній
-                    //if (PlayerPrefs.GetInt("newToken", 0) == 1)
-                    //{
-                    //    requests.Add(new UpdateRequest());
-
-                    //    Send(requests[0]);
-                    //}
-
-                    SwitchToScene();
-                }
-                
-                //Send(requests[0]);
+                SwitchToScene();
             }
             else 
-            {//Перший раз запустили додаток
-                
-                PrintMessage("!!! Client - Перший раз запустили додаток");
+            {
+                PrintMessage("Перший раз запустили додаток");
                 
                 GameSettings.Init();
-
-                //requests.Add(new InitRequest());
-                //requests.Add(new StartRequest());
-                //requests.Add(new UpdateRequest());
                 
-                //Send(requests[0]);
-
-                //OpenURL();
                 GetReferrer();
             }
         }
@@ -104,23 +80,25 @@ namespace Octopus.Client
         
         private void SwitchToScene()
         {
-            PrintMessage("!!! Client -> SwitchToScene");
+            PrintMessage("SwitchToScene");
             
             var scene = CheckReceiveUrlIsNullOrEmpty() ? SceneLoader.Instance.mainScene : SceneLoader.Instance.webviewScene;
             
             if (SceneLoader.Instance)
+            {
                 SceneLoader.Instance.SwitchToScene(scene);
+            }
             else
+            {
                 SceneManager.LoadScene(scene);
+            }
         }
 
         private bool CheckReceiveUrlIsNullOrEmpty()
         {
-            PrintMessage("!!! Client -> CheckStartUrlIsNullOrEmpty");
-            
             var receiveUrl = GameSettings.GetValue(Constants.ReceiveUrl, "");
-
-            PrintMessage($"@@@ StartUrl: {receiveUrl}");
+            
+            PrintMessage($"CheckStartUrlIsNullOrEmpty receiveUrl={receiveUrl}");
 
             return String.IsNullOrEmpty(receiveUrl);
         }
@@ -130,14 +108,13 @@ namespace Octopus.Client
             Debugger.Log($"@@@ Client ->: {message}", new Color(0.2f, 0.4f, 0.9f));
         }
         
-        //---------------------------------------------------------------------
-        private string installReferrer;
         private void GetReferrer(float timeout = 10f)
         {
             PrintMessage("⏳ Очікуємо реферер...");
             
 #if UNITY_EDITOR
             PrintMessage("🎮 Запуск у редакторі, використовуємо тестовий реферер.");
+            
             OnGetData(new InstallReferrerData(
                 "utm_source=google&utm_medium=cpc&utm_term=1&utm_content=2&utm_campaign=3&anid=admob", 
                 "1.0", false, DateTime.Now, DateTime.Now, DateTime.Now, DateTime.Now));
@@ -174,9 +151,7 @@ namespace Octopus.Client
 
             OpenURL();
         }
-
-        private UniWebView _webView;
-        private string generatedURL;
+        
         private void OpenURL()
         {
             GenerateURL();
@@ -185,7 +160,6 @@ namespace Octopus.Client
             
             Subscribe();
             
-            //if (Application.isEditor)
             {
                 var agent = _webView.GetUserAgent();
                 
@@ -247,12 +221,7 @@ namespace Octopus.Client
             _webView.OnPageStarted += OnPageStarted;
             _webView.OnLoadingErrorReceived += OnLoadingErrorReceived;
         }
-
-        private void OnPageStarted(UniWebView webview, string url)
-        {
-            PrintMessage($"### 🎬OnPageStarted UniWebView: url={url} / _webView.Url={_webView.Url}");
-        }
-
+        
         private void UnSubscribe()
         {
             PrintMessage($"📤UnSubscribe");
@@ -260,6 +229,11 @@ namespace Octopus.Client
             _webView.OnPageFinished -= OnPageFinished;
             _webView.OnPageStarted -= OnPageStarted;
             _webView.OnLoadingErrorReceived -= OnLoadingErrorReceived;
+        }
+        
+        private void OnPageStarted(UniWebView webview, string url)
+        {
+            PrintMessage($"### 🎬OnPageStarted UniWebView: url={url} / _webView.Url={_webView.Url}");
         }
         
         private void OnPageFinished(UniWebView view, int statusCode, string url)
